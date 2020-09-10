@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="Patrick Mutuku">
+    <meta name="description" content="">
+    <meta name="keywords" content="google storage, file chunking, chunked uploads">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Title -->
+    <title>Chunked File Upload Demo</title>
+    <link rel="shortcut icon" type="image/ico" href="{{ url_for('static', filename='images/favicon.ico') }}" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+ 
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/dropzone.min.css" integrity="sha512-3g+prZHHfmnvE1HBLwUnVuunaPOob7dpksI7/v6UnF/rnKGwHf/GdEq9K7iEN7qTtW+S0iivTcGpeTBqqB04wA==" crossorigin="anonymous" />
+    <style>
+        .dz-button{
+            color:#555 !important;
+        }
+        .dz-progress{
+            display: none !important;
+        }
+    </style>
+   
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row">
+            <div class="col text-center">
+                <div class="text-center mt-4">
+                    <h4>Google Storage Upload Demo</h4>
+                    <p>Select video to upload - Accepted formats include .mp4,.3gp,.mov and more!</p>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">                    
+            <div class="col-xs-12 col-md-9" id="form-container">
+                <form action="{{url_for('upload')}}" onsubmit="event.preventDefault()" id="dropper" method="post" class="contact-form dropzone" enctype="multipart/form-data" style="border:1px solid #ccc;border-radius: 4px;">
+                    
+                </form>
+                <br/>
+                <div class="form-double">
+                    <input type="text" id="form-name" name="form-name" placeholder="Your name" class="form-control">
+                    <input type="text" id="form-email" name="form-email" class="form-control" placeholder="E-mail address">
+                </div>
+                <input type="text" id="form-country" name="form-country" class="form-control" placeholder="Country">                                                        
+                <textarea id="form-message" form="contact-form" name="form-message" rows="3" class="form-control" placeholder="Video description"></textarea>
+                <br/>
+                <button type="button" class="btn btn-outline-info" id="form-submit-btn">Upload video</button>
+                
+            </div>
+            <div class="col-xs-12 col-md-12" id="progress-bar-container" style="display: none;">
+                <h5 id="uploading-tag-msg">Your file is uploading ... </h5>
+                <div class="progress">
+                    <div class="progress-bar bg-info" style="width:0%" id="upl-progress">0%</div>
+                </div>
+                <div id="back-nav" style="display: none;">
+                    <a href="/"><button class="btn btn-info">Upload another video</button></a>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js" integrity="sha512-9WciDs0XP20sojTJ9E7mChDXy6pcO0qHpwbEJID1YVavz2H6QBz5eLoDD8lseZOb2yGT8xDNIV7HIe1ZbuiDWg==" crossorigin="anonymous"></script>
+    
+
+    <!-- dropzone chunking options  -->
+    <script type="application/javascript">
+        Dropzone.options.dropper = {
+            autoProcessQueue: false,
+            paramName: 'form-file',
+            addRemoveLinks: true,
+            chunking: true,
+            forceChunking: true,
+            url: "{{url_for('upload')}}",
+            dictDefaultMessage: "Drop video file to upload or click to select",
+            maxFilesize: 300, // megabytes
+            chunkSize: {{file_chunk_size}}, // bytes
+            acceptedFiles: "video/x-flv,video/mp4,application/x-mpegURL,video/MP2T,video/3gpp,video/quicktime,video/x-msvideo,video/x-ms-wmv",
+            init: function()
+                {
+                let myDropzone = this;
+                document.getElementById('form-submit-btn').addEventListener("click", function (e) {
+                    //make the div hidden, show upload progress bar div 
+                    $('#form-container').hide();
+                    $('#progress-bar-container').show();
+                    e.preventDefault();
+                    myDropzone.processQueue();
+                });
+
+                this.on('sending', function(file, xhr, formData) 
+                {
+                    formData.append("form-message", document.getElementById('form-message').value);
+                    formData.append("form-country", document.getElementById('form-country').value);
+                    formData.append("form-email", document.getElementById('form-email').value);
+                    formData.append("form-name", document.getElementById('form-name').value);
+                });
+
+                this.on('uploadprogress', function(file,progress, bytesSent){
+
+                    let intProgress = Math.floor(bytesSent / file.size * 100);
+                    $("#upl-progress").width(intProgress + '%');
+                    $("#upl-progress").text(intProgress + '%');
+                });
+
+                this.on("queuecomplete", function (file) {
+                    alert("Upload Successful!");
+                    $("#uploading-tag-msg").html("Your file was successfully uploaded!");
+                    $("#back-nav").show();
+                });
+
+                }
+        }
+    </script>
+</body>
+
+</html>
